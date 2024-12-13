@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# Define the region (modify as per your setup)
+AWS_REGION="us-east-1"
+
+# Find all running instances
+echo "Fetching all running EC2 instances in region $AWS_REGION..."
+INSTANCE_IDS=$(aws ec2 describe-instances \
+    --filters "Name=instance-state-name,Values=running" \
+    --query "Reservations[].Instances[].InstanceId" \
+    --output text --region $AWS_REGION)
+
+if [ -z "$INSTANCE_IDS" ]; then
+    echo "No running EC2 instances found in region $AWS_REGION."
+    exit 0
+fi
+
+# Stop the running instances
+echo "Stopping the following instances: $INSTANCE_IDS"
+aws ec2 stop-instances --instance-ids $INSTANCE_IDS --region $AWS_REGION
+
+# Check the status
+if [ $? -eq 0 ]; then
+    echo "Successfully initiated stop for instances: $INSTANCE_IDS"
+else
+    echo "Failed to stop instances. Please check logs."
+    exit 1
+fi
